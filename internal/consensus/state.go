@@ -787,9 +787,9 @@ func (cs *State) updateToState(ctx context.Context, state sm.State) {
 		// to be gathered for the first block.
 		// And alternative solution that relies on clocks:
 		// cs.StartTime = state.LastBlockTime.Add(timeoutCommit)
-		cs.StartTime = cs.config.Commit(tmtime.Now())
+		cs.StartTime = cs.state.ConsensusParams.Timeout.ForCommit(tmtime.Now())
 	} else {
-		cs.StartTime = cs.config.Commit(cs.CommitTime)
+		cs.StartTime = cs.state.ConsensusParams.Timeout.ForCommit(cs.CommitTime)
 	}
 
 	cs.Validators = validators
@@ -1246,7 +1246,7 @@ func (cs *State) enterPropose(ctx context.Context, height int64, round int32) {
 	}()
 
 	// If we don't get the proposal and all block parts quick enough, enterPrevote
-	cs.scheduleTimeout(cs.config.Propose(round), height, round, cstypes.RoundStepPropose)
+	cs.scheduleTimeout(cs.state.ConsensusParams.Timeout.ForPropose(round), height, round, cstypes.RoundStepPropose)
 
 	// Nothing more to do if we're not a validator
 	if cs.privValidator == nil {
@@ -1604,7 +1604,7 @@ func (cs *State) enterPrevoteWait(ctx context.Context, height int64, round int32
 	}()
 
 	// Wait for some more prevotes; enterPrecommit
-	cs.scheduleTimeout(cs.config.Prevote(round), height, round, cstypes.RoundStepPrevoteWait)
+	cs.scheduleTimeout(cs.state.ConsensusParams.Timeout.ForVote(round), height, round, cstypes.RoundStepPrevoteWait)
 }
 
 // Enter: `timeoutPrevote` after any +2/3 prevotes.
@@ -1757,7 +1757,7 @@ func (cs *State) enterPrecommitWait(ctx context.Context, height int64, round int
 	}()
 
 	// wait for some more precommits; enterNewRound
-	cs.scheduleTimeout(cs.config.Precommit(round), height, round, cstypes.RoundStepPrecommitWait)
+	cs.scheduleTimeout(cs.state.ConsensusParams.Timeout.ForVote(round), height, round, cstypes.RoundStepPrecommitWait)
 }
 
 // Enter: +2/3 precommits for block

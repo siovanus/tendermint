@@ -161,6 +161,26 @@ func DefaultTimeoutParams() TimeoutParams {
 	}
 }
 
+// Propose returns the amount of time to wait for a proposal
+func (t TimeoutParams) ForPropose(round int32) time.Duration {
+	return time.Duration(
+		t.Propose.Nanoseconds()+t.ProposeDelta.Nanoseconds()*int64(round),
+	) * time.Nanosecond
+}
+
+// Precommit returns the amount of time to wait for straggler votes after receiving any +2/3 votes
+func (t TimeoutParams) ForVote(round int32) time.Duration {
+	return time.Duration(
+		t.Vote.Nanoseconds()+t.VoteDelta.Nanoseconds()*int64(round),
+	) * time.Nanosecond
+}
+
+// Commit returns the amount of time to wait for straggler votes after receiving +2/3 precommits
+// for a single block (ie. a commit).
+func (t TimeoutParams) ForCommit(ti time.Time) time.Time {
+	return ti.Add(t.Commit)
+}
+
 func (val *ValidatorParams) IsValidPubkeyType(pubkeyType string) bool {
 	for i := 0; i < len(val.PubKeyTypes); i++ {
 		if val.PubKeyTypes[i] == pubkeyType {
