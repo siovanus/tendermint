@@ -2456,19 +2456,16 @@ func (cs *State) signVote(
 
 	// If the signedMessageType is for precommit,
 	// use our local precommit Timeout as the max wait time for getting a singed commit. The same goes for prevote.
-	var timeout time.Duration
+	timeout := cs.state.ConsensusParams.Timeout.ForVote(cs.Round)
 
 	switch msgType {
 	case tmproto.PrecommitType:
-		timeout = cs.state.ConsensusParams.Timeout.Vote
 		// if the signedMessage type is for a precommit, add VoteExtension
 		ext, err := cs.blockExec.ExtendVote(ctx, vote)
 		if err != nil {
 			return nil, err
 		}
 		vote.VoteExtension = ext
-	case tmproto.PrevoteType:
-		timeout = cs.state.ConsensusParams.Timeout.Vote
 	default:
 		timeout = time.Second
 	}
@@ -2527,12 +2524,7 @@ func (cs *State) updatePrivValidatorPubKey(rctx context.Context) error {
 		return nil
 	}
 
-	var timeout time.Duration
-	if cs.state.ConsensusParams.Timeout.Vote > cs.state.ConsensusParams.Timeout.Vote {
-		timeout = cs.state.ConsensusParams.Timeout.Vote
-	} else {
-		timeout = cs.state.ConsensusParams.Timeout.Vote
-	}
+	timeout := cs.state.ConsensusParams.Timeout.ForVote(cs.Round)
 
 	// no GetPubKey retry beyond the proposal/voting in RetrySignerClient
 	if cs.Step >= cstypes.RoundStepPrecommit && cs.privValidatorType == types.RetrySignerClient {
